@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Face Recognition Attendance System | College Project</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-face-smile"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>VisionAttend</h2>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="tab-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="tab-kiosk">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Live Kiosk</span>
+                    <span class="pulse-badge">LIVE</span>
+                </button>
+                <button class="nav-item" data-tab="tab-students">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Students</span>
+                </button>
+                <button class="nav-item" data-tab="tab-reports">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <span>Reports & Export</span>
+                </button>
+            </nav>
+
+            <div class="system-status-card">
+                <div class="status-indicator online"></div>
+                <div class="status-info">
+                    <span class="status-label">Engine Status</span>
+                    <strong class="status-val" id="status-engine-text">FastAPI & OpenCV Active</strong>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Top Bar -->
+            <header class="topbar">
+                <div class="page-title">
+                    <h1 id="active-tab-title">Dashboard Overview</h1>
+                    <p id="active-tab-subtitle">Real-time attendance analytics & system metrics</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="live-clock" id="live-clock">
+                        <i class="fa-regular fa-clock"></i> <span id="clock-display">00:00:00 AM</span>
+                    </div>
+                    <button class="btn btn-outline" id="btn-theme-toggle" title="Toggle Light / Dark Neobrutalism">
+                        <i class="fa-solid fa-moon" id="theme-toggle-icon"></i> <span id="theme-toggle-text">Dark Mode</span>
+                    </button>
+                    <button class="btn btn-primary" id="btn-open-register">
+                        <i class="fa-solid fa-user-plus"></i> Register Student
+                    </button>
+                </div>
+            </header>
+
+            <!-- Notification Toast Container -->
+            <div id="toast-container" class="toast-container"></div>
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <section id="tab-dashboard" class="tab-pane active">
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card cyan">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-users-viewfinder"></i>
+                        </div>
+                        <div class="metric-body">
+                            <span class="metric-title">Total Students</span>
+                            <h3 class="metric-num" id="stat-total-students">0</h3>
+                            <span class="metric-sub">Registered Profiles</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card green">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div class="metric-body">
+                            <span class="metric-title">Present Today</span>
+                            <h3 class="metric-num" id="stat-present-today">0</h3>
+                            <span class="metric-sub" id="stat-present-sub">0% Attendance</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card amber">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-user-xmark"></i>
+                        </div>
+                        <div class="metric-body">
+                            <span class="metric-title">Absent Today</span>
+                            <h3 class="metric-num" id="stat-absent-today">0</h3>
+                            <span class="metric-sub">Pending Verification</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card purple">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-percent"></i>
+                        </div>
+                        <div class="metric-body">
+                            <span class="metric-title">Attendance Rate</span>
+                            <h3 class="metric-num" id="stat-rate-percent">0%</h3>
+                            <span class="metric-sub">Today's Ratio</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content Sections -->
+                <div class="dash-layout">
+                    <!-- Recent Attendance Stream -->
+                    <div class="content-card dash-main-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-bolt"></i> Real-time Attendance Activity
+                            </div>
+                            <span class="badge badge-glow" id="today-date-badge">Today</span>
+                        </div>
+                        <div class="activity-list" id="activity-feed">
+                            <div class="feed-placeholder">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading recent activity...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department Distribution & System info -->
+                    <div class="content-card dash-side-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-building-user"></i> Department Breakdown
+                            </div>
+                        </div>
+                        <div class="dept-list" id="dept-distribution-list">
+                            <!-- Populated via JS -->
+                        </div>
+
+                        <div class="demo-info-box"
+                            style="background: rgba(0, 230, 118, 0.08); border-color: rgba(0, 230, 118, 0.25); margin-top: 16px;">
+                            <i class="fa-solid fa-brain" style="color: var(--accent-green);"></i>
+                            <div style="flex: 1;">
+                                <strong>ML Classifier Model Status</strong>
+                                <p id="ml-status-text">Algorithm: K-Nearest Neighbors (128D Embeddings)</p>
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <span class="badge badge-glow" id="ml-acc-badge">100% Accuracy</span>
+                                    <button class="btn btn-sm btn-outline" id="btn-retrain-ml"
+                                        style="font-size:11px; padding: 4px 8px;">
+                                        <i class="fa-solid fa-arrows-rotate"></i> Re-Train ML Model
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="demo-info-box" style="margin-top: 12px;">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            <div>
+                                <strong>College Presentation Mode</strong>
+                                <p>Open CV2 & Dlib face embedding algorithm matched against 128D deep feature vector
+                                    space.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: LIVE KIOSK -->
+            <section id="tab-kiosk" class="tab-pane">
+                <div class="kiosk-container">
+                    <div class="video-wrapper content-card">
+                        <div class="video-overlay-bar">
+                            <div class="cam-status">
+                                <span class="pulse-dot"></span>
+                                <strong id="cam-status-label">LIVE CAMERA VERIFICATION KIOSK</strong>
+                            </div>
+                            <div class="cam-controls">
+                                <button class="btn btn-sm btn-primary active" id="btn-cam-mode-browser">
+                                    <i class="fa-solid fa-camera"></i> Browser Webcam
+                                </button>
+                                <button class="btn btn-sm btn-outline" id="btn-cam-mode-server">
+                                    <i class="fa-solid fa-server"></i> Server Stream
+                                </button>
+                            </div>
+                        </div>
+                        <div class="video-frame-container">
+                            <!-- Mode 1: Browser WebCam canvas stream -->
+                            <div id="browser-cam-box" style="position: relative; width: 100%; text-align: center;">
+                                <video id="kiosk-browser-video" autoplay playsinline muted
+                                    style="display:none;"></video>
+                                <img id="kiosk-processed-img" src="" alt="Processed Face Recognition Frame"
+                                    style="width: 100%; max-height: 520px; object-fit: contain;">
+                                <canvas id="kiosk-browser-canvas" style="display:none;"></canvas>
+                            </div>
+                            <!-- Mode 2: Server Stream -->
+                            <img id="video-stream-img" src="" alt="Server Stream"
+                                style="display:none; width: 100%; max-height: 520px; object-fit: contain;">
+                        </div>
+                    </div>
+
+                    <!-- Side Feed Logs -->
+                    <div class="kiosk-side content-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-user-clock"></i> Verification Feed
+                            </div>
+                            <button class="btn btn-sm btn-outline" id="btn-manual-sim">
+                                <i class="fa-solid fa-play"></i> Quick Demo Log
+                            </button>
+                        </div>
+                        <div class="kiosk-log-list" id="kiosk-live-logs">
+                            <!-- Live logs appear here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: STUDENT DIRECTORY -->
+            <section id="tab-students" class="tab-pane">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-student-input" placeholder="Search by name or roll number...">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-dept-select">
+                            <option value="All">All Departments</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Artificial Intelligence">Artificial Intelligence</option>
+                            <option value="Information Tech">Information Tech</option>
+                            <option value="Electronics & Comm.">Electronics & Comm.</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="students-grid" id="students-grid-container">
+                    <!-- Populated via JS -->
+                </div>
+            </section>
+
+            <!-- TAB 4: REPORTS & EXPORT -->
+            <section id="tab-reports" class="tab-pane">
+                <div class="toolbar reports-toolbar">
+                    <div class="date-filter">
+                        <label><i class="fa-regular fa-calendar-days"></i> Select Date:</label>
+                        <input type="date" id="report-date-input">
+                    </div>
+                    <div class="filter-group">
+                        <select id="report-dept-select">
+                            <option value="All">All Departments</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Artificial Intelligence">Artificial Intelligence</option>
+                            <option value="Information Tech">Information Tech</option>
+                            <option value="Electronics & Comm.">Electronics & Comm.</option>
+                        </select>
+                    </div>
+                    <div class="export-actions">
+                        <button class="btn btn-outline" id="btn-export-csv">
+                            <i class="fa-solid fa-file-csv"></i> Download CSV
+                        </button>
+                        <button class="btn btn-success" id="btn-export-excel">
+                            <i class="fa-solid fa-file-excel"></i> Export to Excel
+                        </button>
+                        <button class="btn btn-danger" id="btn-clear-attendance"
+                            style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-trash-can"></i> Clear Attendance
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content-card table-card">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>Student Name</th>
+                                    <th>Roll Number</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Confidence</th>
+                                    <th>Method</th>
+                                    <th style="text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-table-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- STUDENT REGISTRATION MODAL -->
+    <div class="modal-overlay" id="register-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> Register New Student</h3>
+                <button class="modal-close" id="btn-close-modal">&times;</button>
+            </div>
+            <form id="register-student-form">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" name="name" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Roll Number / Student ID *</label>
+                            <input type="text" name="roll_no" required placeholder="e.g. CS-2024-101">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Department *</label>
+                            <select name="department" required>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Artificial Intelligence">Artificial Intelligence</option>
+                                <option value="Information Tech">Information Tech</option>
+                                <option value="Electronics & Comm.">Electronics & Comm.</option>
+                                <option value="Mechanical Eng.">Mechanical Eng.</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Academic Year</label>
+                            <select name="year">
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year" selected>3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="student@college.edu">
+                    </div>
+
+                    <!-- Photo Upload / Snap selector -->
+                    <div class="form-group">
+                        <label>Student Profile Photo *</label>
+                        <div class="photo-method-tabs">
+                            <button type="button" class="photo-tab active" id="tab-upload-file">Upload Image
+                                File</button>
+                            <button type="button" class="photo-tab" id="tab-webcam-snap">Snap from Camera</button>
+                        </div>
+
+                        <!-- Upload File Input -->
+                        <div id="section-file-upload" class="photo-input-section active">
+                            <input type="file" id="student-photo-file" accept="image/*" class="file-input">
+                        </div>
+
+                        <!-- WebCam Snapshot Canvas -->
+                        <div id="section-webcam-snap" class="photo-input-section">
+                            <div class="cam-preview-box">
+                                <video id="registration-webcam" autoplay playsinline muted></video>
+                                <canvas id="registration-canvas" style="display:none;"></canvas>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-secondary mt-2" id="btn-capture-frame">
+                                <i class="fa-solid fa-camera"></i> Capture Photo Frame
+                            </button>
+                        </div>
+                        <input type="hidden" name="photo_base64" id="photo_base64_input">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-register">
+                        <i class="fa-solid fa-check"></i> Register Student & Extract Face Encoding
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
